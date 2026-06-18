@@ -233,12 +233,19 @@ function initAudio() {
   musicGain = AC.createGain(); musicGain.gain.value = 0.0; musicGain.connect(master);
   sfxGain = AC.createGain(); sfxGain.gain.value = 0.9; sfxGain.connect(master);
 }
-function unlockAudio() {
-  initAudio();
-  if (AC.state === "suspended") AC.resume();
+function startMusicLoop() {
   if (!musicStarted) { musicStarted = true; nextStepTime = AC.currentTime + 0.1; musicTimer = setInterval(scheduler, 25); }
   applyAudioState();
 }
+function unlockAudio() {
+  initAudio();
+  if (AC.state !== "running") {
+    AC.resume().then(startMusicLoop).catch(startMusicLoop);
+  } else {
+    startMusicLoop();
+  }
+}
+function ensureRunning() { if (AC && AC.state !== "running") AC.resume().catch(() => {}); }
 function applyAudioState() {
   if (!AC) return;
   const t = AC.currentTime;
@@ -468,6 +475,7 @@ function launch() {
   const body = activeBody;
   Body.setStatic(body, false);
   Body.setVelocity(body, { x: dirx * speed, y: diry * speed });
+  ensureRunning();
   sfxLaunch(power / MAX_PULL);
   activeBody = null; phase = "moving"; settleFrames = 0;
 }
@@ -558,6 +566,14 @@ function preload(cb) {
     im.src = itemImg(i);
   });
 }
+// どこを触っても音声をアンロック（キャンバス外のタップでも有効化）
+["pointerdown", "touchstart", "mousedown", "keydown"].forEach((ev) =>
+  window.addEventListener(ev, unlockAudio, { passive: true }));
+// タブ復帰時に音声を再開（iOS等はバックグラウンドで停止する）
+document.addEventListener("visibilitychange", () => { if (!document.hidden) ensureRunning(); });
+window.addEventListener("focus", ensureRunning);
+window.addEventListener("pageshow", ensureRunning);
+
 window.addEventListener("resize", measure);
 window.addEventListener("load", () => { measure(); preload(resetGame); });
 </script>
