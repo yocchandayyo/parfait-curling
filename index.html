@@ -58,8 +58,9 @@
     width: 52px; height: 52px; border-radius: 50%;
     background: radial-gradient(circle at 50% 35%, #fffaf0, #ffe7b8);
     border: 3px solid #ffd166; box-shadow: 0 3px 8px rgba(0,0,0,.25);
-    display: flex; align-items: center; justify-content: center; font-size: 28px;
+    display: flex; align-items: center; justify-content: center; font-size: 28px; overflow: hidden;
   }
+  .next-circle img { width: 84%; height: 84%; object-fit: contain; }
   .next-badge span { font-size: 12px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
   .score-pill {
     background: linear-gradient(180deg, #fff3d6, #ffe3a8);
@@ -128,8 +129,9 @@
     border-top: 16px solid transparent; border-bottom: 16px solid transparent;
     border-left: 20px solid #1ba3da; filter: drop-shadow(2px 0 0 #fff);
   }
-  .evo-bar .item { font-size: 20px; line-height: 1; transition: filter .2s, opacity .2s; }
-  .evo-bar .item.locked { filter: brightness(0) saturate(0); opacity: .45; }
+  .evo-bar .item { line-height: 0; transition: filter .2s, opacity .2s; }
+  .evo-bar .item img { width: 23px; height: 23px; object-fit: contain; display: block; }
+  .evo-bar .item.locked { filter: brightness(0) saturate(0); opacity: .4; }
 </style>
 </head>
 <body>
@@ -299,28 +301,16 @@ muteBtn.addEventListener("click", (e) => {
   if (!AC) unlockAudio(); else applyAudioState();
 });
 
-/* ===================== テクスチャ ===================== */
-const texCache = {};
-function emojiTexture(emoji, r) {
-  const key = emoji + "_" + r;
-  if (texCache[key]) return texCache[key];
-  const size = Math.ceil(r * 2);
-  const c = document.createElement("canvas");
-  c.width = c.height = size * 2;
-  const ctx = c.getContext("2d");
-  ctx.font = (size * 1.5) + "px serif";
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText(emoji, size, size * 1.05);
-  texCache[key] = { url: c.toDataURL(), scale: (r * 2) / (size * 2) };
-  return texCache[key];
-}
+/* ===================== テクスチャ（生成イラスト） ===================== */
+const TEX = 256; // assets/itemN.png は 256x256
+function itemImg(level) { return "assets/item" + level + ".png"; }
 function makeItem(level, x, y, opts = {}) {
   const it = ITEMS[level];
-  const tex = emojiTexture(it.emoji, it.r);
+  const sc = (it.r * 2) / TEX;
   const body = Bodies.circle(x, y, it.r, {
     restitution: 0.08, friction: 0.05, frictionAir: 0.03, density: 0.0014,
     label: "item",
-    render: { sprite: { texture: tex.url, xScale: tex.scale, yScale: tex.scale } },
+    render: { sprite: { texture: itemImg(level), xScale: sc, yScale: sc } },
     ...opts,
   });
   body.level = level; body.merging = false;
@@ -462,7 +452,7 @@ function spawnNext() {
   phase = "aim";
   const level = nextLevel;
   nextLevel = Math.floor(Math.random() * SPAWNABLE);
-  nextEmojiEl.textContent = ITEMS[nextLevel].emoji;
+  nextEmojiEl.innerHTML = '<img src="' + itemImg(nextLevel) + '" alt="">';
   const a = anchorPos();
   activeBody = makeItem(level, a.x, a.y, { isStatic: true });
   World.add(engine.world, activeBody);
@@ -548,17 +538,28 @@ document.getElementById("restart").addEventListener("click", () => { unlockAudio
 
 /* 進化バー */
 const chainEl = document.getElementById("chain");
-const chainItems = ITEMS.map((it) => {
+const chainItems = ITEMS.map((it, i) => {
   const s = document.createElement("span");
-  s.className = "item"; s.textContent = it.emoji; s.title = it.name;
+  s.className = "item"; s.title = it.name;
+  const im = document.createElement("img");
+  im.src = itemImg(i); im.alt = "";
+  s.appendChild(im);
   chainEl.appendChild(s); return s;
 });
 function updateEvoBar() {
   chainItems.forEach((el, i) => el.classList.toggle("locked", i > maxRevealed));
 }
 
+function preload(cb) {
+  let done = 0, n = ITEMS.length;
+  ITEMS.forEach((_, i) => {
+    const im = new Image();
+    im.onload = im.onerror = () => { if (++done === n) cb(); };
+    im.src = itemImg(i);
+  });
+}
 window.addEventListener("resize", measure);
-window.addEventListener("load", () => { measure(); resetGame(); });
+window.addEventListener("load", () => { measure(); preload(resetGame); });
 </script>
 </body>
 </html>
