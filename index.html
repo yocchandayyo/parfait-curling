@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="パフェカーリング">
 <meta name="theme-color" content="#7ec8f0">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <title>フルーツパフェ カーリング</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -132,6 +135,60 @@
   .evo-bar .item { line-height: 0; transition: filter .2s, opacity .2s; }
   .evo-bar .item img { width: 23px; height: 23px; object-fit: contain; display: block; }
   .evo-bar .item.locked { filter: brightness(0) saturate(0); opacity: .4; }
+
+  /* 全画面オーバーレイ（タイトル／ランキング） */
+  .screen {
+    position: absolute; inset: 0; z-index: 30; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; padding: 24px; text-align: center;
+    background: linear-gradient(170deg, rgba(126,200,240,.96), rgba(255,160,200,.96));
+  }
+  .screen.show { display: flex; animation: fadein .3s ease; }
+  .screen .titleArt { width: 120px; height: 120px; filter: drop-shadow(0 6px 10px rgba(0,0,0,.2)); animation: bob 2s ease-in-out infinite; }
+  .screen h1.big {
+    font-size: 30px; font-weight: 900; line-height: 1.25;
+    background: linear-gradient(90deg, #ff3d7f, #ff8a00, #ffd000, #1ec8b0, #7b5cff, #ff3d7f);
+    background-size: 300% auto; -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent; animation: hue 6s linear infinite;
+  }
+  .screen .sub { font-size: 13px; color: #6a2348; font-weight: 700; max-width: 280px; }
+  .screen .bestline { font-size: 15px; color: #fff; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+  .bigbtn {
+    border: none; cursor: pointer; min-width: 200px;
+    background: linear-gradient(180deg, #ffe66d, #ffb627); color: #8a4d05; font-weight: 900;
+    font-size: 20px; padding: 14px 30px; border-radius: 999px;
+    box-shadow: 0 6px 0 #d98a0b; transition: transform .08s, box-shadow .08s;
+  }
+  .bigbtn.alt { background: linear-gradient(180deg, #9ad7ff, #4cb3f0); color: #0a4a73; box-shadow: 0 6px 0 #1d7fc0; font-size: 16px; min-width: 160px; padding: 11px 24px; }
+  .bigbtn:active { transform: translateY(4px); box-shadow: 0 2px 0 #d98a0b; }
+  .bigbtn.alt:active { box-shadow: 0 2px 0 #1d7fc0; }
+
+  /* ランキング表 */
+  .ranklist { list-style: none; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 6px; margin: 4px 0; }
+  .ranklist li {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.85); border-radius: 12px; padding: 8px 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.12);
+  }
+  .ranklist .rk { font-size: 17px; font-weight: 900; color: #c2185b; width: 34px; text-align: center; }
+  .ranklist .nm { flex: 1; text-align: left; font-weight: 700; color: #5a3a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ranklist .sc { font-weight: 900; color: #8a5a1c; }
+  .ranklist li.me { background: #fff3c4; outline: 2px solid #ffcf5e; }
+  .ranklist .empty { justify-content: center; color: #7a5a3a; font-weight: 700; }
+
+  /* ゲームオーバーの登録欄 */
+  .reg { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+  .reg input {
+    width: 150px; font-size: 16px; padding: 9px 12px; border-radius: 12px;
+    border: 2px solid #fff; background: rgba(255,255,255,.95); color: #5a3a1a; font-weight: 700; text-align: center;
+  }
+  .reg button {
+    border: none; cursor: pointer; background: linear-gradient(180deg,#ffe66d,#ffb627);
+    color: #8a4d05; font-weight: 900; font-size: 15px; padding: 9px 16px; border-radius: 12px; box-shadow: 0 4px 0 #d98a0b;
+  }
+  .reg button:active { transform: translateY(3px); box-shadow: 0 1px 0 #d98a0b; }
+  .ov-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .ov-saved { font-size: 13px; color: #d6f5e0; font-weight: 800; }
 </style>
 </head>
 <body>
@@ -157,11 +214,36 @@
     <div class="overlay" id="overlay">
       <h2 id="ovTitle">ゲームオーバー</h2>
       <p id="ovText">手前に溜まりすぎ！</p>
-      <button class="btn" id="restart">もう一度あそぶ</button>
+      <div class="reg" id="regBox">
+        <input id="nameInput" maxlength="10" placeholder="なまえ" />
+        <button id="regBtn">登録</button>
+      </div>
+      <div class="ov-saved" id="ovSaved" style="display:none;">ランキングに登録しました！</div>
+      <div class="ov-row">
+        <button class="btn" id="restart">もう一度</button>
+        <button class="bigbtn alt" id="ovRank">🏆 ランキング</button>
+      </div>
     </div>
   </div>
 
   <div class="evo-wrap"><div class="evo-bar" id="chain"></div></div>
+
+  <!-- スタート画面 -->
+  <div class="screen" id="startScreen">
+    <img class="titleArt" src="icon-512.png" alt="" />
+    <h1 class="big">フルーツパフェ<br>カーリング</h1>
+    <p class="sub">手前から奥へスライド！ 同じフルーツを合体させて、パフェを目指そう🍨</p>
+    <div class="bestline">ベスト <span id="startBest">0</span></div>
+    <button class="bigbtn" id="startBtn">▶ スタート</button>
+    <button class="bigbtn alt" id="startRank">🏆 ランキング</button>
+  </div>
+
+  <!-- ランキング画面 -->
+  <div class="screen" id="rankScreen">
+    <h1 class="big">🏆 ランキング</h1>
+    <ol class="ranklist" id="rankList"></ol>
+    <button class="bigbtn" id="rankClose">とじる</button>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
@@ -206,6 +288,8 @@ let phase = "aim";
 let gameOver = false;
 let overflowTimer = 0;
 let maxRevealed = SPAWNABLE - 1;
+let started = false;   // スタート画面を抜けたか
+let lastScore = 0;     // 直近の確定スコア（登録用）
 
 function anchorPos() { return { x: W / 2, y: H - 56 }; }
 function foulY() { return H - 96; }
@@ -486,7 +570,7 @@ function toCanvas(clientX, clientY) {
 }
 function onDown(clientX, clientY) {
   unlockAudio();
-  if (gameOver || phase !== "aim" || !activeBody) return;
+  if (!started || gameOver || phase !== "aim" || !activeBody) return;
   aiming = true; updateAim(clientX, clientY);
 }
 function onMove(clientX, clientY) { if (aiming) updateAim(clientX, clientY); }
@@ -507,17 +591,26 @@ function addScore(n) {
   if (score > best) { best = score; bestEl.textContent = best; localStorage.setItem("ftp_best", best); }
 }
 
+function showGameOver(title, text) {
+  gameOver = true;
+  lastScore = score;
+  ovTitle.textContent = title;
+  ovText.textContent = text;
+  // 登録欄をリセット
+  regBox.style.display = "flex";
+  ovSaved.style.display = "none";
+  nameInput.value = localStorage.getItem("ftp_name") || "";
+  overlay.classList.add("show");
+}
 function endGame() {
-  if (gameOver) return; gameOver = true;
-  ovTitle.textContent = "ゲームオーバー";
-  ovText.textContent = `手前に溜まりすぎ！ スコア ${score}`;
-  overlay.classList.add("show"); sfxEnd(false);
+  if (gameOver) return;
+  showGameOver("ゲームオーバー", `手前に溜まりすぎ！ スコア ${score}`);
+  sfxEnd(false);
 }
 function win() {
-  if (gameOver) return; gameOver = true;
-  ovTitle.textContent = "🍨 パフェ完成！";
-  ovText.textContent = `おみごと！ スコア ${score}`;
-  overlay.classList.add("show"); sfxEnd(true);
+  if (gameOver) return;
+  showGameOver("🍨 パフェ完成！", `おみごと！ スコア ${score}`);
+  sfxEnd(true);
 }
 
 function resetGame() {
@@ -566,6 +659,72 @@ function preload(cb) {
     im.src = itemImg(i);
   });
 }
+
+/* ===================== ランキング（ローカル保存） ===================== */
+const RANK_KEY = "ftp_ranking";
+const startScreen = document.getElementById("startScreen");
+const rankScreen = document.getElementById("rankScreen");
+const regBox = document.getElementById("regBox");
+const ovSaved = document.getElementById("ovSaved");
+const nameInput = document.getElementById("nameInput");
+function escapeHtml(s) { return (s + "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function getRanking() { try { return JSON.parse(localStorage.getItem(RANK_KEY)) || []; } catch (e) { return []; } }
+function addRanking(name, sc) {
+  const list = getRanking();
+  const entry = { name: (name || "ゲスト").slice(0, 10), score: sc, ts: Date.now() };
+  list.push(entry);
+  list.sort((a, b) => b.score - a.score);
+  const top = list.slice(0, 10);
+  localStorage.setItem(RANK_KEY, JSON.stringify(top));
+  return entry;
+}
+function renderRanking(highlight) {
+  const list = getRanking();
+  const ol = document.getElementById("rankList");
+  if (!list.length) { ol.innerHTML = '<li class="empty">まだ記録がありません</li>'; return; }
+  const medal = ["🥇", "🥈", "🥉"];
+  ol.innerHTML = list.map((r, i) => {
+    const me = highlight && r.ts === highlight.ts ? " me" : "";
+    return `<li class="${me.trim()}"><span class="rk">${medal[i] || (i + 1)}</span>`
+      + `<span class="nm">${escapeHtml(r.name)}</span><span class="sc">${r.score}</span></li>`;
+  }).join("");
+}
+function showStart() {
+  document.getElementById("startBest").textContent = best;
+  rankScreen.classList.remove("show");
+  overlay.classList.remove("show");
+  startScreen.classList.add("show");
+  started = false;
+}
+function beginGame() {
+  unlockAudio();
+  startScreen.classList.remove("show");
+  rankScreen.classList.remove("show");
+  resetGame();
+  started = true;
+}
+function openRanking(highlight) { renderRanking(highlight); rankScreen.classList.add("show"); }
+
+document.getElementById("startBtn").addEventListener("click", beginGame);
+document.getElementById("startRank").addEventListener("click", () => openRanking());
+document.getElementById("rankClose").addEventListener("click", () => {
+  rankScreen.classList.remove("show");
+  if (!started) startScreen.classList.add("show");
+});
+document.getElementById("ovRank").addEventListener("click", () => openRanking());
+document.getElementById("regBtn").addEventListener("click", () => {
+  const nm = nameInput.value.trim() || "ゲスト";
+  localStorage.setItem("ftp_name", nm);
+  const entry = addRanking(nm, lastScore);
+  regBox.style.display = "none";
+  ovSaved.style.display = "block";
+  openRanking(entry);
+});
+
+/* サービスワーカー登録（PWA／オフライン対応） */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
 // どこを触っても音声をアンロック（キャンバス外のタップでも有効化）
 ["pointerdown", "touchstart", "mousedown", "keydown"].forEach((ev) =>
   window.addEventListener(ev, unlockAudio, { passive: true }));
@@ -575,7 +734,10 @@ window.addEventListener("focus", ensureRunning);
 window.addEventListener("pageshow", ensureRunning);
 
 window.addEventListener("resize", measure);
-window.addEventListener("load", () => { measure(); preload(resetGame); });
+window.addEventListener("load", () => {
+  measure();
+  preload(() => { resetGame(); showStart(); });
+});
 </script>
 </body>
 </html>
