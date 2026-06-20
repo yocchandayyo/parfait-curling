@@ -812,9 +812,23 @@ document.getElementById("regBtn").addEventListener("click", () => {
   openRanking(entry);
 });
 
-/* サービスワーカー登録（PWA／オフライン対応） */
+/* サービスワーカー登録（PWA／オフライン対応・自動更新） */
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").then((reg) => {
+      reg.update();
+      // 新バージョン検知時、インストール完了かつ既存制御あり＝更新 → 自動リロード
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) {
+            location.reload();
+          }
+        });
+      });
+    }).catch(() => {});
+  });
 }
 // どこを触っても音声をアンロック（キャンバス外のタップでも有効化）
 ["pointerdown", "touchstart", "mousedown", "keydown"].forEach((ev) =>
