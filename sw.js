@@ -1,7 +1,7 @@
 /* オフライン対応のサービスワーカー（ネットワーク優先で常に最新を取得） */
-const CACHE = "parfait-curling-v3";
+const CACHE = "parfait-curling-v4";
 const ASSETS = [
-  "./", "./index.html", "./manifest.json",
+  "./", "./index.html", "./manifest.json", "./title-bg.jpg",
   "./icon-192.png", "./icon-512.png", "./icon-180.png",
   "https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js",
 ];

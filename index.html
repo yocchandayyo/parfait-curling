@@ -152,54 +152,55 @@
   .evo-bar .item img { width: 23px; height: 23px; object-fit: contain; display: block; }
   .evo-bar .item.locked { filter: brightness(0) saturate(0); opacity: .4; }
 
-  /* 全画面オーバーレイ（タイトル／ランキング）：ビーチ背景 */
+  /* タイトル／ランキング画面：キービジュアル背景 */
   .screen {
     position: absolute; inset: 0; z-index: 30; display: none;
     flex-direction: column; align-items: center; justify-content: center;
     gap: 15px; padding: 24px; text-align: center; overflow: hidden;
-    background: linear-gradient(180deg, #8fd6f5 0%, #bfe9ff 29%, #34a3d8 34%,
-      #1f7fb8 44%, #7fcbe8 47.5%, #f6e0ab 51%, #f0d28f 100%);
+    background: #f3d8af center / cover no-repeat;
+    background-image: url("title-bg.jpg");
   }
   .screen.show { display: flex; animation: fadein .3s ease; }
-  .deco {
-    position: absolute; z-index: 0; pointer-events: none; opacity: .95;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,.18)); animation: float 4.5s ease-in-out infinite;
-  }
-  @keyframes float { 0%,100%{ transform: translateY(0) rotate(-5deg); } 50%{ transform: translateY(-13px) rotate(5deg); } }
 
-  .screen .titleArt {
-    width: 132px; height: auto; position: relative; z-index: 2;
-    filter: drop-shadow(0 12px 16px rgba(20,60,90,.4)); animation: bob 2.6s ease-in-out infinite;
+  #startScreen { justify-content: space-between; gap: 0; padding: 0 22px; }
+  #startScreen::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 30%;
+    background: linear-gradient(180deg, rgba(255,224,180,.5), rgba(255,224,180,0)); pointer-events: none;
   }
-  .screen h1.big {
-    position: relative; z-index: 2;
-    font-size: 33px; font-weight: 900; line-height: 1.08; letter-spacing: .5px; color: #fff;
+  #startScreen::after {
+    content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 46%;
+    background: linear-gradient(0deg, rgba(70,35,25,.62), rgba(70,35,25,0)); pointer-events: none;
+  }
+  .startTop { padding-top: 13%; position: relative; z-index: 2; }
+  .startBottom {
+    width: 100%; padding-bottom: 9%; position: relative; z-index: 2;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .logo {
+    font-size: 35px; font-weight: 900; line-height: 1.04; letter-spacing: 1px; color: #fff;
     text-shadow:
-      2px 0 #ff5fa2, -2px 0 #ff5fa2, 0 2px #ff5fa2, 0 -2px #ff5fa2,
-      2px 2px #ff5fa2, -2px -2px #ff5fa2, 2px -2px #ff5fa2, -2px 2px #ff5fa2,
-      0 6px 10px rgba(15,55,85,.4);
-  }
-  .screen .sub {
-    position: relative; z-index: 2; font-size: 13px; color: #fff; font-weight: 700;
-    max-width: 270px; line-height: 1.5; text-shadow: 0 1px 3px rgba(0,0,0,.42);
+      2.5px 0 #c2185b, -2.5px 0 #c2185b, 0 2.5px #c2185b, 0 -2.5px #c2185b,
+      2px 2px #c2185b, -2px -2px #c2185b, 2px -2px #c2185b, -2px 2px #c2185b,
+      0 7px 14px rgba(70,20,40,.55);
+    animation: bob 3s ease-in-out infinite;
   }
   .screen .bestline {
     position: relative; z-index: 2; font-size: 14px; color: #b8005d; font-weight: 800;
-    background: rgba(255,255,255,.92); padding: 5px 18px; border-radius: 999px; box-shadow: 0 3px 8px rgba(0,0,0,.18);
+    background: rgba(255,255,255,.92); padding: 5px 18px; border-radius: 999px; box-shadow: 0 3px 8px rgba(0,0,0,.25);
   }
   .bigbtn {
-    position: relative; z-index: 2; border: none; cursor: pointer; min-width: 220px;
+    position: relative; z-index: 2; border: none; cursor: pointer; min-width: 230px;
     background: linear-gradient(180deg, #ffd45e, #ff9e2c); color: #7a3d00; font-weight: 900;
-    font-size: 21px; padding: 15px 30px; border-radius: 999px;
-    box-shadow: 0 7px 0 #e07d10, 0 11px 16px rgba(0,0,0,.2); transition: transform .08s, box-shadow .08s;
+    font-size: 22px; padding: 16px 30px; border-radius: 999px;
+    box-shadow: 0 7px 0 #e07d10, 0 11px 18px rgba(0,0,0,.28); transition: transform .08s, box-shadow .08s;
   }
-  .bigbtn:active { transform: translateY(5px); box-shadow: 0 2px 0 #e07d10, 0 4px 8px rgba(0,0,0,.2); }
+  .bigbtn:active { transform: translateY(5px); box-shadow: 0 2px 0 #e07d10, 0 4px 8px rgba(0,0,0,.28); }
   .bigbtn.alt {
     background: linear-gradient(180deg, #9ad7ff, #4cb3f0); color: #08456e;
     font-size: 16px; min-width: 178px; padding: 12px 26px;
-    box-shadow: 0 7px 0 #1d7fc0, 0 11px 16px rgba(0,0,0,.18);
+    box-shadow: 0 7px 0 #1d7fc0, 0 11px 18px rgba(0,0,0,.24);
   }
-  .bigbtn.alt:active { transform: translateY(5px); box-shadow: 0 2px 0 #1d7fc0, 0 4px 8px rgba(0,0,0,.18); }
+  .bigbtn.alt:active { transform: translateY(5px); box-shadow: 0 2px 0 #1d7fc0, 0 4px 8px rgba(0,0,0,.24); }
 
   /* ランキング画面の白カード */
   .glass-card {
@@ -210,6 +211,39 @@
     box-shadow: 0 18px 44px rgba(30,70,100,.32);
   }
   #rankTitle { color: #c2185b; text-shadow: none; }
+
+  /* 演出：コンボ・新記録・画面シェイク */
+  #comboPop {
+    position: absolute; top: 24%; left: 50%; transform: translate(-50%, 0) scale(0.4);
+    z-index: 4; pointer-events: none; opacity: 0;
+    font-size: 34px; font-weight: 900; color: #fff;
+    text-shadow: 2px 0 #ff7a00, -2px 0 #ff7a00, 0 2px #ff7a00, 0 -2px #ff7a00, 0 5px 10px rgba(0,0,0,.35);
+    white-space: nowrap;
+  }
+  #comboPop.show { animation: comboPop .7s ease-out; }
+  @keyframes comboPop {
+    0% { opacity: 0; transform: translate(-50%, 10px) scale(0.4); }
+    25% { opacity: 1; transform: translate(-50%, 0) scale(1.15); }
+    70% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -16px) scale(1); }
+  }
+  #bestFlash {
+    position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.6);
+    z-index: 4; pointer-events: none; opacity: 0;
+    font-size: 26px; font-weight: 900; color: #fff;
+    text-shadow: 2px 0 #e0157a, -2px 0 #e0157a, 0 2px #e0157a, 0 -2px #e0157a, 0 4px 10px rgba(0,0,0,.3);
+  }
+  #bestFlash.show { animation: bestFlash 1.1s ease-out; }
+  @keyframes bestFlash {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6) rotate(-6deg); }
+    30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(3deg); }
+    75% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+    100% { opacity: 0; transform: translate(-50%, -80px) scale(1); }
+  }
+  @keyframes shakeSm { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-2px,1px)} 50%{transform:translate(2px,-2px)} 75%{transform:translate(-1px,2px)} }
+  @keyframes shakeLg { 0%,100%{transform:translate(0,0)} 20%{transform:translate(-4px,2px)} 40%{transform:translate(4px,-3px)} 60%{transform:translate(-4px,-2px)} 80%{transform:translate(3px,3px)} }
+  .stage-wrap.shakeSm { animation: shakeSm .22s ease; }
+  .stage-wrap.shakeLg { animation: shakeLg .34s ease; }
 
   /* ランキング表 */
   .ranklist { list-style: none; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 6px; margin: 4px 0; }
@@ -267,6 +301,8 @@
   <div class="stage-wrap" id="stageWrap">
     <canvas id="stage"></canvas>
     <div class="bolts"></div>
+    <div id="comboPop"></div>
+    <div id="bestFlash"></div>
     <div class="overlay" id="overlay">
       <h2 id="ovTitle">ゲームオーバー</h2>
       <p id="ovText">手前に溜まりすぎ！</p>
@@ -286,17 +322,15 @@
 
   <!-- スタート画面 -->
   <div class="screen" id="startScreen">
-    <img class="deco" src="assets/item1.png" alt="" style="width:56px; top:11%; left:7%; animation-delay:0s">
-    <img class="deco" src="assets/item8.png" alt="" style="width:62px; top:15%; right:6%; animation-delay:.9s">
-    <img class="deco" src="assets/item5.png" alt="" style="width:50px; bottom:13%; left:9%; animation-delay:1.7s">
-    <img class="deco" src="assets/item0.png" alt="" style="width:46px; bottom:17%; right:8%; animation-delay:.5s">
-    <img class="titleArt" src="assets/item10.png" alt="" />
-    <h1 class="big" id="startTitle">フルーツパフェ<br>カーリング</h1>
-    <p class="sub" id="startSub">手前から奥へスライド！ 同じフルーツを合体させて、パフェを目指そう🍨</p>
-    <div class="bestline"><span id="startBestLbl">ベスト</span> <span id="startBest">0</span></div>
-    <button class="bigbtn" id="startBtn">▶ スタート</button>
-    <button class="bigbtn alt" id="startRank">🏆 ランキング</button>
-    <button class="langtgl" id="langToggle">🌐 English</button>
+    <div class="startTop">
+      <h1 class="logo" id="startTitle">フルーツパフェ<br>カーリング</h1>
+    </div>
+    <div class="startBottom">
+      <div class="bestline"><span id="startBestLbl">ベスト</span> <span id="startBest">0</span></div>
+      <button class="bigbtn" id="startBtn">▶ スタート</button>
+      <button class="bigbtn alt" id="startRank">🏆 ランキング</button>
+      <button class="langtgl" id="langToggle">🌐 English</button>
+    </div>
   </div>
 
   <!-- ランキング画面 -->
@@ -353,6 +387,12 @@ let overflowTimer = 0;
 let maxRevealed = SPAWNABLE - 1;
 let started = false;   // スタート画面を抜けたか
 let lastScore = 0;     // 直近の確定スコア（登録用）
+let comboCount = 0;    // 1ショット中の連続合体数
+let bestAtStart = best;
+let bestFlashed = false;
+const scorePops = [];  // 合体時の「+N」表示
+const comboPopEl = document.getElementById("comboPop");
+const bestFlashEl = document.getElementById("bestFlash");
 
 /* ===================== 多言語（日本語 / 英語） ===================== */
 const I18N = {
@@ -366,6 +406,7 @@ const I18N = {
     clear: "🍨 パフェ完成！", clearText: "おみごと！ スコア {s}",
     toggle: "🌐 English",
     loading: "読み込み中…", offline: "（オフライン：端末内の記録）", savedOffline: "オフラインのため端末内に保存しました",
+    combo: "コンボ", newbest: "✨ 新記録！",
   },
   en: {
     title: "Fruit Parfait<br>Curling",
@@ -377,6 +418,7 @@ const I18N = {
     clear: "🍨 Parfait Complete!", clearText: "Brilliant! Score {s}",
     toggle: "🌐 日本語",
     loading: "Loading…", offline: "(Offline — local scores)", savedOffline: "Saved on this device (offline)",
+    combo: "Combo", newbest: "✨ New Best!",
   },
 };
 let lang = localStorage.getItem("ftp_lang");
@@ -475,9 +517,10 @@ function hat(t, dest, gain) {
   const g = AC.createGain(); g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
   src.connect(hp); hp.connect(g); g.connect(dest); src.start(t); src.stop(t + 0.06);
 }
-function sfxMerge(level) {
+function sfxMerge(level, combo) {
   if (!AC || !audioOn) return;
-  const t = AC.currentTime; const base = 420 * Math.pow(1.07, level * 2);
+  const t = AC.currentTime;
+  const base = 420 * Math.pow(1.07, level * 2) * (1 + ((combo || 1) - 1) * 0.06);  // 連鎖で高音化
   blip(base, t, 0.18, "triangle", 0.5, sfxGain);
   blip(base * 1.5, t + 0.05, 0.16, "sine", 0.35, sfxGain);
   blip(base * 2, t + 0.1, 0.12, "sine", 0.22, sfxGain);
@@ -565,11 +608,31 @@ function handleCollision(ev) {
 
     popEffect(nx, ny, ITEMS[newLevel]);
     burst(nx, ny, newLevel);
-    sfxMerge(newLevel);
-    addScore((newLevel + 1) * 10);
+    comboCount++;
+    const gain = (newLevel + 1) * 10 * comboCount;  // 連鎖でボーナス
+    addScore(gain);
+    spawnScorePop(nx, ny, "+" + gain);
+    sfxMerge(newLevel, comboCount);
+    shakeStage(newLevel);
+    if (comboCount >= 2) showCombo(comboCount);
     if (newLevel > maxRevealed) { maxRevealed = newLevel; updateEvoBar(); }
     if (newLevel === ITEMS.length - 1) win();
   }
+}
+
+/* 演出ヘルパー */
+function spawnScorePop(x, y, text) { scorePops.push({ x, y, text, life: 1 }); }
+function showCombo(n) {
+  comboPopEl.textContent = t("combo") + " ×" + n + "!";
+  comboPopEl.classList.remove("show"); void comboPopEl.offsetWidth; comboPopEl.classList.add("show");
+}
+function showBestFlash() {
+  bestFlashEl.textContent = t("newbest");
+  bestFlashEl.classList.remove("show"); void bestFlashEl.offsetWidth; bestFlashEl.classList.add("show");
+}
+function shakeStage(level) {
+  const cls = level >= 6 ? "shakeLg" : "shakeSm";
+  stageWrap.classList.remove("shakeSm", "shakeLg"); void stageWrap.offsetWidth; stageWrap.classList.add(cls);
 }
 
 const effects = [];
@@ -608,10 +671,31 @@ function afterUpdate() {
 function drawOverlayGfx() {
   const ctx = render.context;
   ctx.save();
-  // ファウルライン（白い破線）
-  ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 3; ctx.setLineDash([14, 12]); ctx.lineCap = "round";
+  // ピンチ警告（ファウル付近に溜まると赤く脈打つ）
+  const danger = overflowTimer > 0 && !gameOver;
+  const pulse = danger ? (0.5 + 0.5 * Math.sin(Date.now() / 120)) : 0;
+  if (danger) {
+    const g = ctx.createLinearGradient(0, foulY(), 0, H);
+    g.addColorStop(0, `rgba(255,40,40,${0.22 * pulse})`);
+    g.addColorStop(1, "rgba(255,40,40,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, foulY(), W, H - foulY());
+  }
+  // ファウルライン（通常は白、危険時は赤く脈打つ）
+  const c = danger ? Math.round(60 - pulse * 60) : 255;
+  ctx.strokeStyle = danger ? `rgba(255,${c},${c},${0.75 + pulse * 0.25})` : "rgba(255,255,255,0.9)";
+  ctx.lineWidth = danger ? 4 : 3; ctx.setLineDash([14, 12]); ctx.lineCap = "round";
   ctx.beginPath(); ctx.moveTo(14, foulY()); ctx.lineTo(W - 14, foulY()); ctx.stroke();
   ctx.setLineDash([]); ctx.restore();
+
+  // 「+N」スコアポップ
+  for (let i = scorePops.length - 1; i >= 0; i--) {
+    const p = scorePops[i]; p.life -= 0.02; p.y -= 0.8;
+    if (p.life <= 0) { scorePops.splice(i, 1); continue; }
+    ctx.save(); ctx.globalAlpha = Math.max(0, p.life);
+    ctx.font = "bold 22px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,140,0,0.95)"; ctx.strokeText(p.text, p.x, p.y);
+    ctx.fillStyle = "#fff"; ctx.fillText(p.text, p.x, p.y); ctx.restore();
+  }
 
   for (let i = effects.length - 1; i >= 0; i--) {
     const e = effects[i]; e.life -= 0.05;
@@ -672,7 +756,7 @@ function launch() {
   Body.setVelocity(body, { x: dirx * speed, y: diry * speed });
   ensureRunning();
   sfxLaunch(power / MAX_PULL);
-  activeBody = null; phase = "moving"; settleFrames = 0;
+  activeBody = null; phase = "moving"; settleFrames = 0; comboCount = 0;
 }
 
 function toCanvas(clientX, clientY) {
@@ -700,6 +784,7 @@ function addScore(n) {
   score += n; scoreEl.textContent = score;
   scorePill.classList.add("pop"); setTimeout(() => scorePill.classList.remove("pop"), 130);
   if (score > best) { best = score; bestEl.textContent = best; localStorage.setItem("ftp_best", best); }
+  if (!bestFlashed && bestAtStart > 0 && score > bestAtStart) { bestFlashed = true; showBestFlash(); }
 }
 
 function showGameOver(title, text) {
@@ -726,11 +811,13 @@ function win() {
 
 function resetGame() {
   if (engine) { Render.stop(render); Runner.stop(runner); World.clear(engine.world); Engine.clear(engine); }
-  effects.length = 0; confetti.length = 0;
+  effects.length = 0; confetti.length = 0; scorePops.length = 0;
   score = 0; scoreEl.textContent = 0;
   gameOver = false; phase = "aim"; activeBody = null;
   aiming = false; aimVec = { x: 0, y: 0 };
   overflowTimer = 0; settleFrames = 0;
+  comboCount = 0; bestAtStart = best; bestFlashed = false;
+  comboPopEl.classList.remove("show"); bestFlashEl.classList.remove("show");
   maxRevealed = SPAWNABLE - 1; updateEvoBar();
   nextLevel = Math.floor(Math.random() * SPAWNABLE);
   overlay.classList.remove("show");
