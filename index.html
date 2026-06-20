@@ -189,6 +189,12 @@
   .reg button:active { transform: translateY(3px); box-shadow: 0 1px 0 #d98a0b; }
   .ov-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
   .ov-saved { font-size: 13px; color: #d6f5e0; font-weight: 800; }
+  .langtgl {
+    margin-top: 4px; border: 2px solid rgba(255,255,255,.8); cursor: pointer;
+    background: rgba(255,255,255,.25); color: #fff; font-weight: 800;
+    font-size: 13px; padding: 7px 16px; border-radius: 999px;
+  }
+  .langtgl:active { transform: scale(.95); }
 </style>
 </head>
 <body>
@@ -199,11 +205,11 @@
   <div class="topbar">
     <div class="next-badge">
       <div class="next-circle" id="nextEmoji">🫐</div>
-      <span>Next</span>
+      <span id="nextLbl">Next</span>
     </div>
     <div class="score-pill" id="scorePill">
       <span id="score">0</span>
-      <small>BEST <span id="best">0</span></small>
+      <small><span id="bestLbl">BEST</span> <span id="best">0</span></small>
     </div>
     <button id="muteBtn" aria-label="音のオンオフ">🔊</button>
   </div>
@@ -231,16 +237,17 @@
   <!-- スタート画面 -->
   <div class="screen" id="startScreen">
     <img class="titleArt" src="icon-512.png" alt="" />
-    <h1 class="big">フルーツパフェ<br>カーリング</h1>
-    <p class="sub">手前から奥へスライド！ 同じフルーツを合体させて、パフェを目指そう🍨</p>
-    <div class="bestline">ベスト <span id="startBest">0</span></div>
+    <h1 class="big" id="startTitle">フルーツパフェ<br>カーリング</h1>
+    <p class="sub" id="startSub">手前から奥へスライド！ 同じフルーツを合体させて、パフェを目指そう🍨</p>
+    <div class="bestline"><span id="startBestLbl">ベスト</span> <span id="startBest">0</span></div>
     <button class="bigbtn" id="startBtn">▶ スタート</button>
     <button class="bigbtn alt" id="startRank">🏆 ランキング</button>
+    <button class="langtgl" id="langToggle">🌐 English</button>
   </div>
 
   <!-- ランキング画面 -->
   <div class="screen" id="rankScreen">
-    <h1 class="big">🏆 ランキング</h1>
+    <h1 class="big" id="rankTitle">🏆 ランキング</h1>
     <ol class="ranklist" id="rankList"></ol>
     <button class="bigbtn" id="rankClose">とじる</button>
   </div>
@@ -290,6 +297,52 @@ let overflowTimer = 0;
 let maxRevealed = SPAWNABLE - 1;
 let started = false;   // スタート画面を抜けたか
 let lastScore = 0;     // 直近の確定スコア（登録用）
+
+/* ===================== 多言語（日本語 / 英語） ===================== */
+const I18N = {
+  ja: {
+    title: "フルーツパフェ<br>カーリング",
+    sub: "手前から奥へスライド！ 同じフルーツを合体させて、パフェを目指そう🍨",
+    next: "つぎ", best: "ベスト", start: "▶ スタート", ranking: "🏆 ランキング",
+    close: "とじる", retry: "もう一度", register: "登録", name: "なまえ",
+    saved: "ランキングに登録しました！", empty: "まだ記録がありません", guest: "ゲスト",
+    gameover: "ゲームオーバー", overflow: "手前に溜まりすぎ！ スコア {s}",
+    clear: "🍨 パフェ完成！", clearText: "おみごと！ スコア {s}",
+    toggle: "🌐 English",
+  },
+  en: {
+    title: "Fruit Parfait<br>Curling",
+    sub: "Slide forward and merge matching fruits to build the ultimate parfait! 🍨",
+    next: "Next", best: "Best", start: "▶ Start", ranking: "🏆 Ranking",
+    close: "Close", retry: "Retry", register: "Save", name: "Name",
+    saved: "Saved to the ranking!", empty: "No records yet", guest: "Guest",
+    gameover: "Game Over", overflow: "Too crowded at the front! Score {s}",
+    clear: "🍨 Parfait Complete!", clearText: "Brilliant! Score {s}",
+    toggle: "🌐 日本語",
+  },
+};
+let lang = localStorage.getItem("ftp_lang");
+if (!lang) lang = (navigator.language || "en").toLowerCase().startsWith("ja") ? "ja" : "en";
+function t(k, s) { const v = (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k; return s != null ? v.replace("{s}", s) : v; }
+function setText(id, k) { const el = document.getElementById(id); if (el) el.textContent = t(k); }
+function applyI18n() {
+  document.documentElement.lang = lang;
+  setText("nextLbl", "next");
+  setText("bestLbl", "best");
+  setText("startBestLbl", "best");
+  document.getElementById("startTitle").innerHTML = t("title");
+  setText("startSub", "sub");
+  setText("startBtn", "start");
+  setText("startRank", "ranking");
+  setText("rankTitle", "ranking");
+  setText("rankClose", "close");
+  setText("regBtn", "register");
+  setText("ovRank", "ranking");
+  setText("restart", "retry");
+  setText("ovSaved", "saved");
+  document.getElementById("nameInput").placeholder = t("name");
+  document.getElementById("langToggle").textContent = t("toggle");
+}
 
 function anchorPos() { return { x: W / 2, y: H - 56 }; }
 function foulY() { return H - 96; }
@@ -604,12 +657,12 @@ function showGameOver(title, text) {
 }
 function endGame() {
   if (gameOver) return;
-  showGameOver("ゲームオーバー", `手前に溜まりすぎ！ スコア ${score}`);
+  showGameOver(t("gameover"), t("overflow", score));
   sfxEnd(false);
 }
 function win() {
   if (gameOver) return;
-  showGameOver("🍨 パフェ完成！", `おみごと！ スコア ${score}`);
+  showGameOver(t("clear"), t("clearText", score));
   sfxEnd(true);
 }
 
@@ -671,7 +724,7 @@ function escapeHtml(s) { return (s + "").replace(/[&<>"]/g, (c) => ({ "&": "&amp
 function getRanking() { try { return JSON.parse(localStorage.getItem(RANK_KEY)) || []; } catch (e) { return []; } }
 function addRanking(name, sc) {
   const list = getRanking();
-  const entry = { name: (name || "ゲスト").slice(0, 10), score: sc, ts: Date.now() };
+  const entry = { name: (name || t("guest")).slice(0, 10), score: sc, ts: Date.now() };
   list.push(entry);
   list.sort((a, b) => b.score - a.score);
   const top = list.slice(0, 10);
@@ -681,7 +734,7 @@ function addRanking(name, sc) {
 function renderRanking(highlight) {
   const list = getRanking();
   const ol = document.getElementById("rankList");
-  if (!list.length) { ol.innerHTML = '<li class="empty">まだ記録がありません</li>'; return; }
+  if (!list.length) { ol.innerHTML = '<li class="empty">' + t("empty") + '</li>'; return; }
   const medal = ["🥇", "🥈", "🥉"];
   ol.innerHTML = list.map((r, i) => {
     const me = highlight && r.ts === highlight.ts ? " me" : "";
@@ -712,8 +765,13 @@ document.getElementById("rankClose").addEventListener("click", () => {
   if (!started) startScreen.classList.add("show");
 });
 document.getElementById("ovRank").addEventListener("click", () => openRanking());
+document.getElementById("langToggle").addEventListener("click", () => {
+  lang = lang === "ja" ? "en" : "ja";
+  localStorage.setItem("ftp_lang", lang);
+  applyI18n();
+});
 document.getElementById("regBtn").addEventListener("click", () => {
-  const nm = nameInput.value.trim() || "ゲスト";
+  const nm = nameInput.value.trim() || t("guest");
   localStorage.setItem("ftp_name", nm);
   const entry = addRanking(nm, lastScore);
   regBox.style.display = "none";
@@ -735,7 +793,7 @@ window.addEventListener("pageshow", ensureRunning);
 
 window.addEventListener("resize", measure);
 window.addEventListener("load", () => {
-  measure();
+  measure(); applyI18n();
   preload(() => { resetGame(); showStart(); });
 });
 </script>
