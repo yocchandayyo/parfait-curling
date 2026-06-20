@@ -279,6 +279,12 @@
     text-shadow: 0 1px 2px rgba(0,0,0,.3);
   }
   .langtgl:active { transform: scale(.95); }
+  .nameRow { position: relative; z-index: 2; display: flex; align-items: center; gap: 8px; }
+  .nameRow span { color: #fff; font-weight: 800; font-size: 14px; text-shadow: 0 1px 3px rgba(0,0,0,.45); }
+  .nameRow input {
+    width: 150px; font-size: 15px; padding: 9px 12px; border-radius: 12px;
+    border: 2px solid #fff; background: rgba(255,255,255,.95); color: #5a3a1a; font-weight: 700; text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -306,10 +312,6 @@
     <div class="overlay" id="overlay">
       <h2 id="ovTitle">ゲームオーバー</h2>
       <p id="ovText">手前に溜まりすぎ！</p>
-      <div class="reg" id="regBox">
-        <input id="nameInput" maxlength="10" placeholder="なまえ" />
-        <button id="regBtn">登録</button>
-      </div>
       <div class="ov-saved" id="ovSaved" style="display:none;">ランキングに登録しました！</div>
       <div class="ov-row">
         <button class="btn" id="restart">もう一度</button>
@@ -326,6 +328,7 @@
       <h1 class="logo" id="startTitle">フルーツパフェ<br>カーリング</h1>
     </div>
     <div class="startBottom">
+      <div class="nameRow"><span id="nameLbl">なまえ</span><input id="nameInput" maxlength="10" placeholder="ゲスト" /></div>
       <div class="bestline"><span id="startBestLbl">ベスト</span> <span id="startBest">0</span></div>
       <button class="bigbtn" id="startBtn">▶ スタート</button>
       <button class="bigbtn alt" id="startRank">🏆 ランキング</button>
@@ -436,11 +439,11 @@ function applyI18n() {
   setText("startRank", "ranking");
   setText("rankTitle", "ranking");
   setText("rankClose", "close");
-  setText("regBtn", "register");
   setText("ovRank", "ranking");
   setText("restart", "retry");
   setText("ovSaved", "saved");
-  document.getElementById("nameInput").placeholder = t("name");
+  setText("nameLbl", "name");
+  document.getElementById("nameInput").placeholder = t("guest");
   document.getElementById("langToggle").textContent = t("toggle");
 }
 
@@ -459,9 +462,11 @@ bestEl.textContent = best;
 let AC = null, master, musicGain, sfxGain;
 let audioOn = true, musicStarted = false;
 let nextStepTime = 0, musicStep = 0, musicTimer = null;
-const BPM = 128, STEP_DUR = 60 / BPM / 2;
-const LEAD = [659, 0, 784, 880, 784, 659, 587, 0, 523, 0, 659, 784, 880, 0, 784, 587];
-const BASS = [131, 0,0,0, 175, 0,0,0, 110, 0,0,0, 98, 0,0,0];
+const BPM = 142, STEP_DUR = 60 / BPM / 2;
+// 明るく上昇する陽気なメロディ（Cメジャー／I-vi-IV-V）
+const LEAD = [523, 659, 784, 1046, 784, 880, 659, 0, 587, 784, 1046, 880, 784, 659, 523, 0];
+const BASS = [131, 0, 262, 0, 110, 0, 220, 0, 87, 0, 175, 0, 98, 0, 196, 0];   // 弾むベース
+const ARP  = [1046, 1318, 1568, 1318, 880, 1046, 1318, 1046, 880, 1046, 1397, 1046, 988, 1175, 1568, 1175]; // 高音キラキラ
 function initAudio() {
   if (AC) return;
   const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -494,9 +499,10 @@ function scheduler() {
   if (!AC) return;
   while (nextStepTime < AC.currentTime + 0.12) {
     const s = musicStep % 16;
-    if (LEAD[s]) blip(LEAD[s], nextStepTime, 0.16, "triangle", 0.5, musicGain);
-    if (BASS[s]) blip(BASS[s], nextStepTime, 0.22, "sine", 0.7, musicGain);
-    if (s % 2 === 1) hat(nextStepTime, musicGain, 0.12);
+    if (LEAD[s]) blip(LEAD[s], nextStepTime, 0.15, "triangle", 0.5, musicGain);
+    if (BASS[s]) blip(BASS[s], nextStepTime, 0.17, "sine", 0.6, musicGain);
+    if (ARP[s]) blip(ARP[s], nextStepTime, 0.09, "triangle", 0.11, musicGain);
+    if (s % 2 === 1) hat(nextStepTime, musicGain, 0.10);
     nextStepTime += STEP_DUR; musicStep++;
   }
 }
@@ -792,11 +798,24 @@ function showGameOver(title, text) {
   lastScore = score;
   ovTitle.textContent = title;
   ovText.textContent = text;
-  // 登録欄をリセット
-  regBox.style.display = "flex";
   ovSaved.style.display = "none";
-  nameInput.value = localStorage.getItem("ftp_name") || "";
   overlay.classList.add("show");
+  autoSubmitScore();   // 保存済みの名前で自動登録（自己ベスト更新時）
+}
+let lastSubmitTs = 0;
+async function autoSubmitScore() {
+  const nm = (localStorage.getItem("ftp_name") || "").trim() || t("guest");
+  // 自己ベストを更新した時だけランキングに登録（連投を防ぐ）
+  if (lastScore > 0 && lastScore > bestAtStart) {
+    const ts = Date.now();
+    lastSubmitTs = ts;
+    addRankingLocal(nm, lastScore, ts);
+    ovSaved.textContent = t("saved"); ovSaved.style.display = "block";
+    try { await submitScoreOnline(nm, lastScore, ts); }
+    catch (e) { ovSaved.textContent = t("savedOffline"); }
+  } else {
+    lastSubmitTs = 0;
+  }
 }
 function endGame() {
   if (gameOver) return;
@@ -862,7 +881,6 @@ function preload(cb) {
 const RANK_KEY = "ftp_ranking";
 const startScreen = document.getElementById("startScreen");
 const rankScreen = document.getElementById("rankScreen");
-const regBox = document.getElementById("regBox");
 const ovSaved = document.getElementById("ovSaved");
 const nameInput = document.getElementById("nameInput");
 
@@ -930,6 +948,7 @@ async function renderRanking(highlightTs) {
 }
 function showStart() {
   document.getElementById("startBest").textContent = best;
+  nameInput.value = localStorage.getItem("ftp_name") || "";
   rankScreen.classList.remove("show");
   overlay.classList.remove("show");
   startScreen.classList.add("show");
@@ -950,27 +969,15 @@ document.getElementById("rankClose").addEventListener("click", () => {
   rankScreen.classList.remove("show");
   if (!started) startScreen.classList.add("show");
 });
-document.getElementById("ovRank").addEventListener("click", () => openRanking());
+document.getElementById("ovRank").addEventListener("click", () => openRanking(lastSubmitTs));
 document.getElementById("langToggle").addEventListener("click", () => {
   lang = lang === "ja" ? "en" : "ja";
   localStorage.setItem("ftp_lang", lang);
   applyI18n();
 });
-document.getElementById("regBtn").addEventListener("click", async () => {
-  const nm = (nameInput.value.trim() || t("guest")).slice(0, 10);
-  localStorage.setItem("ftp_name", nm);
-  const ts = Date.now();
-  addRankingLocal(nm, lastScore, ts);     // フォールバック用にローカルにも保存
-  regBox.style.display = "none";
-  ovSaved.textContent = t("saved"); ovSaved.style.display = "block";
-  rankScreen.classList.add("show");
-  document.getElementById("rankList").innerHTML = '<li class="empty">' + t("loading") + '</li>';
-  try {
-    await submitScoreOnline(nm, lastScore, ts);   // オンライン送信
-  } catch (e) {
-    ovSaved.textContent = t("savedOffline");
-  }
-  renderRanking(ts);   // 送信後に最新の上位を取得して表示（自分をハイライト）
+// 名前はスタート画面で1回入力すれば保存され、以降は自動でランキング送信される
+nameInput.addEventListener("input", () => {
+  localStorage.setItem("ftp_name", nameInput.value.trim().slice(0, 10));
 });
 
 /* サービスワーカー登録（PWA／オフライン対応・自動更新） */
