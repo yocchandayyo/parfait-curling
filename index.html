@@ -462,11 +462,11 @@ bestEl.textContent = best;
 let AC = null, master, musicGain, sfxGain;
 let audioOn = true, musicStarted = false;
 let nextStepTime = 0, musicStep = 0, musicTimer = null;
-const BPM = 142, STEP_DUR = 60 / BPM / 2;
-// 明るく上昇する陽気なメロディ（Cメジャー／I-vi-IV-V）
-const LEAD = [523, 659, 784, 1046, 784, 880, 659, 0, 587, 784, 1046, 880, 784, 659, 523, 0];
-const BASS = [131, 0, 262, 0, 110, 0, 220, 0, 87, 0, 175, 0, 98, 0, 196, 0];   // 弾むベース
-const ARP  = [1046, 1318, 1568, 1318, 880, 1046, 1318, 1046, 880, 1046, 1397, 1046, 988, 1175, 1568, 1175]; // 高音キラキラ
+const BPM = 104, STEP_DUR = 60 / BPM / 2;
+// ゆったり可愛いオルゴール調メロディ（Cメジャー／I-vi-IV-V）
+const LEAD = [659, 0, 784, 0, 659, 587, 523, 0, 587, 0, 659, 0, 587, 0, 0, 0];
+const BASS = [131, 0, 0, 0, 110, 0, 0, 0, 87, 0, 0, 0, 98, 0, 0, 0];            // 柔らかいベース
+const ARP  = [1046, 0, 0, 1318, 0, 0, 880, 0, 0, 1046, 0, 0, 988, 0, 1175, 0];  // ぽろぽろ鳴るオルゴール
 function initAudio() {
   if (AC) return;
   const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -499,10 +499,9 @@ function scheduler() {
   if (!AC) return;
   while (nextStepTime < AC.currentTime + 0.12) {
     const s = musicStep % 16;
-    if (LEAD[s]) blip(LEAD[s], nextStepTime, 0.15, "triangle", 0.5, musicGain);
-    if (BASS[s]) blip(BASS[s], nextStepTime, 0.17, "sine", 0.6, musicGain);
-    if (ARP[s]) blip(ARP[s], nextStepTime, 0.09, "triangle", 0.11, musicGain);
-    if (s % 2 === 1) hat(nextStepTime, musicGain, 0.10);
+    if (LEAD[s]) blip(LEAD[s], nextStepTime, 0.34, "triangle", 0.42, musicGain);
+    if (BASS[s]) blip(BASS[s], nextStepTime, 0.5, "sine", 0.5, musicGain);
+    if (ARP[s]) blip(ARP[s], nextStepTime, 0.2, "triangle", 0.1, musicGain);
     nextStepTime += STEP_DUR; musicStep++;
   }
 }
