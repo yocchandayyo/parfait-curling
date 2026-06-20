@@ -1,5 +1,5 @@
 /* オフライン対応のサービスワーカー（ネットワーク優先で常に最新を取得） */
-const CACHE = "parfait-curling-v2";
+const CACHE = "parfait-curling-v3";
 const ASSETS = [
   "./", "./index.html", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./icon-180.png",
@@ -19,6 +19,8 @@ self.addEventListener("activate", (e) => {
 // ネットワーク優先：オンライン時は常に最新を取得しキャッシュ更新、失敗時のみキャッシュ
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+  // Firestore等のAPIはSWを通さずネットワーク直通（ランキング通信に干渉しない）
+  if (/googleapis\.com|firebaseio\.com|firestore/.test(e.request.url)) return;
   e.respondWith(
     fetch(e.request).then((res) => {
       const copy = res.clone();
