@@ -1,9 +1,9 @@
 {
   "id": "parfait-curling",
-  "name": "フルーツパフェ カーリング",
-  "short_name": "パフェカーリング",
-  "description": "手前から奥へスライドして同じフルーツを合体させる、かわいいパフェ作り合体パズル。",
-  "lang": "ja",
+  "name": "Fruit Parfait Curling",
+  "short_name": "Parfait Curling",
+  "description": "Slide and merge cute fruits to build the ultimate parfait! A relaxing puzzle game.",
+  "lang": "en",
   "dir": "ltr",
   "categories": ["games", "entertainment"],
   "start_url": "./index.html",

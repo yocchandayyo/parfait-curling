@@ -6,12 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="パフェカーリング">
+<meta name="apple-mobile-web-app-title" content="Parfait Curling">
 <meta name="theme-color" content="#7ec8f0">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<title>フルーツパフェ カーリング</title>
+<title>Fruit Parfait Curling</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -424,8 +424,8 @@ const I18N = {
     combo: "Combo", newbest: "✨ New Best!",
   },
 };
-let lang = localStorage.getItem("ftp_lang");
-if (!lang) lang = (navigator.language || "en").toLowerCase().startsWith("ja") ? "ja" : "en";
+// 海外向け：デフォルトは英語（保存済みの選択があればそれを優先）
+let lang = localStorage.getItem("ftp_lang") || "en";
 function t(k, s) { const v = (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k; return s != null ? v.replace("{s}", s) : v; }
 function setText(id, k) { const el = document.getElementById(id); if (el) el.textContent = t(k); }
 function applyI18n() {
