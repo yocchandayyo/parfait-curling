@@ -1,5 +1,5 @@
-/* オフライン対応の簡易サービスワーカー */
-const CACHE = "parfait-curling-v1";
+/* オフライン対応のサービスワーカー（ネットワーク優先で常に最新を取得） */
+const CACHE = "parfait-curling-v2";
 const ASSETS = [
   "./", "./index.html", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./icon-180.png",
@@ -16,15 +16,14 @@ self.addEventListener("activate", (e) => {
       .then(() => self.clients.claim())
   );
 });
+// ネットワーク優先：オンライン時は常に最新を取得しキャッシュ更新、失敗時のみキャッシュ
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   e.respondWith(
-    caches.match(e.request).then((hit) =>
-      hit || fetch(e.request).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
-        return res;
-      }).catch(() => hit)
-    )
+    fetch(e.request).then((res) => {
+      const copy = res.clone();
+      caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+      return res;
+    }).catch(() => caches.match(e.request))
   );
 });
