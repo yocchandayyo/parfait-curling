@@ -1,2 +1,5 @@
 node_modules/
 .claude/
+
+# 旧SSD由来の壊れた.gitのバックアップ（不要なら削除可）
+.git.corrupt.bak/
