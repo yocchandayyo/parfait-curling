@@ -296,6 +296,63 @@
     width: 150px; font-size: 15px; padding: 9px 12px; border-radius: 12px;
     border: 2px solid #fff; background: rgba(255,255,255,.95); color: #5a3a1a; font-weight: 700; text-align: center;
   }
+  .nameOkBtn {
+    border: none; cursor: pointer; background: linear-gradient(180deg,#ffe66d,#ffb627);
+    color: #8a4d05; font-weight: 900; font-size: 14px; padding: 9px 14px; border-radius: 12px; box-shadow: 0 3px 0 #d98a0b;
+  }
+  .nameOkBtn:active { transform: translateY(3px); box-shadow: 0 1px 0 #d98a0b; }
+  /* 保存済みのなまえ表示（2回目以降は入力欄の代わりにこれを出す） */
+  .nameDisplay { position: relative; z-index: 2; display: none; align-items: center; gap: 8px; }
+  .playerTag {
+    color: #fff; font-weight: 800; font-size: 15px; text-shadow: 0 1px 3px rgba(0,0,0,.45);
+    background: rgba(255,255,255,.22); padding: 7px 16px; border-radius: 999px; border: 2px solid rgba(255,255,255,.7);
+  }
+  .playerTag b { font-weight: 900; }
+  .nameEditBtn {
+    border: 2px solid rgba(255,255,255,.7); cursor: pointer; background: rgba(255,255,255,.22);
+    font-size: 14px; padding: 6px 10px; border-radius: 999px; line-height: 1;
+  }
+  .nameEditBtn:active { transform: scale(.95); }
+
+  /* 復活ボタン（ゲームオーバー時のリワード動画導線） */
+  .reviveBtn {
+    display: none; margin: 2px 0 2px; border: none; cursor: pointer;
+    background: linear-gradient(180deg, #7be0a3, #25b56e); color: #06351f; font-weight: 900;
+    font-size: 18px; padding: 13px 26px; border-radius: 999px;
+    box-shadow: 0 6px 0 #1a8a52, 0 8px 14px rgba(0,0,0,.25); transition: transform .08s, box-shadow .08s;
+  }
+  .reviveBtn:active { transform: translateY(4px); box-shadow: 0 2px 0 #1a8a52; }
+
+  /* 広告オーバーレイ（テスト広告＝実ネットワーク導入までのスタブ表示） */
+  .ad-overlay {
+    position: absolute; inset: 0; z-index: 60; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(15,20,30,.94); backdrop-filter: blur(4px); padding: 24px;
+  }
+  .ad-overlay.show { display: flex; animation: fadein .25s ease; }
+  .ad-box {
+    width: min(330px, 90%); background: linear-gradient(180deg,#1f2937,#111827);
+    border: 2px solid rgba(255,255,255,.15); border-radius: 22px; padding: 22px 20px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px; color: #fff; text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5);
+  }
+  .ad-badge {
+    align-self: flex-start; font-size: 11px; font-weight: 900; letter-spacing: 1px;
+    color: #111; background: #ffd54a; padding: 3px 9px; border-radius: 6px;
+  }
+  .ad-art { font-size: 64px; line-height: 1; animation: bob 2.4s ease-in-out infinite; }
+  .ad-msg { font-size: 15px; font-weight: 700; opacity: .92; }
+  .ad-count {
+    font-size: 13px; font-weight: 800; color: #ffd54a;
+    border: 1px solid rgba(255,213,74,.5); border-radius: 999px; padding: 4px 14px; min-width: 52px;
+  }
+  .ad-skip {
+    margin-top: 4px; border: none; cursor: pointer; font-weight: 800; font-size: 14px;
+    padding: 10px 20px; border-radius: 999px; background: #374151; color: #e5e7eb;
+  }
+  .ad-skip:active { transform: scale(.96); }
+  .ad-skip.reward { background: linear-gradient(180deg,#ffe66d,#ffb627); color: #7a3d00; }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
 </style>
 </head>
 <body>
@@ -324,9 +381,20 @@
       <h2 id="ovTitle">ゲームオーバー</h2>
       <p id="ovText">手前に溜まりすぎ！</p>
       <div class="ov-saved" id="ovSaved" style="display:none;">ランキングに登録しました！</div>
+      <button class="reviveBtn" id="reviveBtn">🎬 復活する</button>
       <div class="ov-row">
         <button class="btn" id="restart">もう一度</button>
         <button class="bigbtn alt" id="ovRank">🏆 ランキング</button>
+      </div>
+    </div>
+    <!-- 広告オーバーレイ（テスト表示。実ネットワーク導入までのスタブ） -->
+    <div class="ad-overlay" id="adOverlay">
+      <div class="ad-box">
+        <div class="ad-badge" id="adBadge">広告</div>
+        <div class="ad-art" id="adArt">🍨</div>
+        <div class="ad-msg" id="adMsg">テスト広告</div>
+        <div class="ad-count" id="adCount">3</div>
+        <button class="ad-skip" id="adSkip">スキップ</button>
       </div>
     </div>
   </div>
@@ -339,7 +407,8 @@
       <h1 class="logo" id="startTitle">フルーツパフェ<br>カーリング</h1>
     </div>
     <div class="startBottom">
-      <div class="nameRow"><span id="nameLbl">なまえ</span><input id="nameInput" maxlength="10" placeholder="ゲスト" /></div>
+      <div class="nameRow" id="nameRow"><span id="nameLbl">なまえ</span><input id="nameInput" maxlength="10" placeholder="ゲスト" /><button class="nameOkBtn" id="nameOk">OK</button></div>
+      <div class="nameDisplay" id="nameDisplay"><span class="playerTag">👤 <b id="playerName"></b></span><button class="nameEditBtn" id="nameEdit" aria-label="なまえ変更">✏️</button></div>
       <div class="bestline"><span id="startBestLbl">ベスト</span> <span id="startBest">0</span></div>
       <button class="bigbtn" id="startBtn">▶ スタート</button>
       <button class="bigbtn alt" id="startRank">🏆 ランキング</button>
@@ -357,6 +426,8 @@
   </div>
 </div>
 
+<audio id="bgmAudio" src="assets/bgm.mp3" loop preload="auto"></audio>
+<audio id="titleAudio" src="assets/bgm_title.mp3" loop preload="auto"></audio>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <script>
 const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
@@ -421,6 +492,8 @@ const I18N = {
     toggle: "🌐 English",
     loading: "読み込み中…", offline: "（オフライン：端末内の記録）", savedOffline: "オフラインのため端末内に保存しました",
     combo: "コンボ", newbest: "✨ 新記録！",
+    revive: "🎬 復活する", adLabel: "広告", adRewardHint: "最後まで見ると復活できます",
+    adInterHint: "まもなくゲームに戻ります", adSkipReward: "スキップ（復活なし）", adClose: "✕ 閉じてゲームへ", revived: "復活！",
   },
   en: {
     title: "Fruit Parfait<br>Game",
@@ -433,6 +506,9 @@ const I18N = {
     toggle: "🌐 日本語",
     loading: "Loading…", offline: "(Offline — local scores)", savedOffline: "Saved on this device (offline)",
     combo: "Combo", newbest: "✨ New Best!",
+    revive: "🎬 Continue", adLabel: "Ad", adRewardHint: "Watch fully to continue",
+    adInterHint: "Returning to the game…", adSkipReward: "Skip (no continue)", adClose: "✕ Close & play",
+    revived: "Continued!",
   },
 };
 // 海外向け：デフォルトは英語（保存済みの選択があればそれを優先）
@@ -452,6 +528,7 @@ function applyI18n() {
   setText("rankClose", "close");
   setText("ovRank", "ranking");
   setText("restart", "retry");
+  setText("reviveBtn", "revive");
   setText("ovSaved", "saved");
   setText("nameLbl", "name");
   document.getElementById("nameInput").placeholder = t("guest");
@@ -486,8 +563,24 @@ function initAudio() {
   musicGain = AC.createGain(); musicGain.gain.value = 0.0; musicGain.connect(master);
   sfxGain = AC.createGain(); sfxGain.gain.value = 0.9; sfxGain.connect(master);
 }
+// BGMはMureka生成のmp3をループ再生（合体/発射などの効果音はWeb Audioのまま）
+// 2曲：タイトル画面用(titleAudio) と プレイ中用(bgmAudio) を切り替える
+const bgmAudio = document.getElementById("bgmAudio");
+const titleAudio = document.getElementById("titleAudio");
+const BGM_VOL = 0.4;
+let currentMusic = "title";   // 起動直後はスタート画面＝タイトル曲
+function curMusicEl() { return currentMusic === "title" ? titleAudio : bgmAudio; }
+function otherMusicEl() { return currentMusic === "title" ? bgmAudio : titleAudio; }
+// 画面に応じて曲を切り替える（同じ曲なら再開のみ）
+function playMusic(which) {
+  currentMusic = which;
+  const oth = otherMusicEl();
+  if (oth) oth.pause();
+  const cur = curMusicEl();
+  if (cur) { cur.volume = audioOn ? BGM_VOL : 0; cur.play().catch(() => {}); }  // 自動再生制限：操作時に再生
+}
 function startMusicLoop() {
-  if (!musicStarted) { musicStarted = true; nextStepTime = AC.currentTime + 0.1; musicTimer = setInterval(scheduler, 25); }
+  playMusic(currentMusic);   // 旧オルゴールの自動生成メロディは止め、現在の画面の曲を再生
   applyAudioState();
 }
 function unlockAudio() {
@@ -498,12 +591,19 @@ function unlockAudio() {
     startMusicLoop();
   }
 }
-function ensureRunning() { if (AC && AC.state !== "running") AC.resume().catch(() => {}); }
+function ensureRunning() {
+  if (AC && AC.state !== "running") AC.resume().catch(() => {});
+  const cur = curMusicEl();
+  if (cur && audioOn && cur.paused) cur.play().catch(() => {});  // タブ復帰時に現在の曲を再開
+}
 function applyAudioState() {
+  const cur = curMusicEl(), oth = otherMusicEl();
+  if (cur) cur.volume = audioOn ? BGM_VOL : 0;   // 🔊ミュートボタンに連動
+  if (oth) oth.volume = 0;                        // 裏の曲は常に無音
   if (!AC) return;
   const t = AC.currentTime;
   musicGain.gain.cancelScheduledValues(t);
-  musicGain.gain.linearRampToValueAtTime(audioOn ? 0.16 : 0.0, t + 0.2);
+  musicGain.gain.linearRampToValueAtTime(0.0, t + 0.2);    // 旧synthメロディは無音化
   sfxGain.gain.setValueAtTime(audioOn ? 0.9 : 0.0, t);
 }
 function scheduler() {
@@ -556,6 +656,26 @@ function sfxEnd(winFlag) {
   const seq = winFlag ? [523, 659, 784, 1046, 1318] : [523, 440, 349, 262];
   seq.forEach((f, i) => blip(f, t + i * 0.13, 0.3, winFlag ? "triangle" : "sawtooth", 0.5, sfxGain));
 }
+// UI効果音：軽いタップ音
+function sfxClick() {
+  if (!AC || !audioOn) return;
+  const t = AC.currentTime;
+  blip(880, t, 0.07, "triangle", 0.32, sfxGain);
+  blip(1320, t + 0.035, 0.06, "sine", 0.20, sfxGain);
+}
+// スタート時：明るい上昇アルペジオ
+function sfxStart() {
+  if (!AC || !audioOn) return;
+  const t = AC.currentTime;
+  [660, 880, 1175, 1568].forEach((f, i) => blip(f, t + i * 0.06, 0.15, "triangle", 0.4, sfxGain));
+}
+// すべてのボタンにクリック音を自動付与（capture段階＝stopPropagationされても鳴る。ミュートボタンは除外）
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b || b.id === "muteBtn") return;
+  if (!AC) return;   // 初回はpointerdownのunlockAudioでAC生成→以降鳴る
+  if (b.id === "startBtn") sfxStart(); else sfxClick();
+}, true);
 muteBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   audioOn = !audioOn; muteBtn.textContent = audioOn ? "🔊" : "🔇";
@@ -803,18 +923,127 @@ function addScore(n) {
   if (!bestFlashed && bestAtStart > 0 && score > bestAtStart) { bestFlashed = true; showBestFlash(); }
 }
 
-function showGameOver(title, text) {
+/* ===================== 広告（Web側／TWAにもそのまま反映される） =====================
+   provider を "stub"（テスト表示）にしてあるので、実ネットワーク導入前でも動作確認できる。
+   本番では showInterstitialReal / showRewardedReal の中身を広告SDK呼び出しに差し替えるだけ。 */
+const AD_CONFIG = {
+  provider: "stub",               // "stub"=内蔵テスト広告 / 後で "h5games" 等に変更
+  interstitialEveryGames: 2,      // 何ゲームごとにインタースティシャルを出すか
+  interstitialMinIntervalSec: 45, // 連続表示を避ける最短間隔（秒）
+  enableRevive: true,             // リワード動画での「復活」を有効にするか
+};
+const reviveBtn = document.getElementById("reviveBtn");
+const adOverlay = document.getElementById("adOverlay");
+const adBadge = document.getElementById("adBadge");
+const adArt = document.getElementById("adArt");
+const adMsg = document.getElementById("adMsg");
+const adCount = document.getElementById("adCount");
+const adSkip = document.getElementById("adSkip");
+let reviveUsed = false;           // 1ゲームにつき復活は1回まで
+
+const Ads = (() => {
+  let gamesSince = 0, lastInterTs = 0, busy = false, adTimer = null;
+  function init() { /* stubは初期化不要。実SDKはここでロード */ }
+  function noteGameEnd() { gamesSince++; }
+
+  // 内蔵テスト広告：実ネットワーク導入までの代替（カウントダウン→完了）
+  function runStub(kind, sec, onComplete, onSkip) {
+    if (busy) return;
+    busy = true;
+    const rewarded = kind === "rewarded";
+    adBadge.textContent = t("adLabel") + (AD_CONFIG.provider === "stub" ? " (TEST)" : "");
+    adArt.textContent = rewarded ? "🎬" : "🍨";
+    adMsg.textContent = rewarded ? t("adRewardHint") : t("adInterHint");
+    adSkip.classList.toggle("reward", false);
+    adSkip.style.display = "none";
+    let left = sec;
+    adCount.textContent = left;
+    adOverlay.classList.add("show");
+    clearInterval(adTimer);
+    adTimer = setInterval(() => {
+      left--;
+      adCount.textContent = left > 0 ? left : "✓";
+      if (left <= 0) {
+        clearInterval(adTimer);
+        // 完了：閉じるボタンを出して報酬確定
+        adSkip.textContent = t("adClose");
+        adSkip.classList.toggle("reward", rewarded);
+        adSkip.style.display = "block";
+        adSkip.onclick = () => { closeAd(); onComplete && onComplete(); };
+      }
+    }, 1000);
+    // リワードのみ：途中スキップ（報酬なし）を1秒後に許可
+    if (rewarded) {
+      setTimeout(() => {
+        if (!busy) return;
+        if (adSkip.style.display === "none") {
+          adSkip.textContent = t("adSkipReward");
+          adSkip.style.display = "block";
+          adSkip.onclick = () => { closeAd(); onSkip && onSkip(); };
+        }
+      }, 1000);
+    }
+  }
+  function closeAd() { clearInterval(adTimer); adOverlay.classList.remove("show"); adSkip.onclick = null; busy = false; }
+
+  function showInterstitial(done) {
+    if (AD_CONFIG.provider === "stub") return runStub("interstitial", 3, done, done);
+    // TODO: 実プロバイダ。失敗時も必ず done() でゲームへ戻す
+    return done();
+  }
+  function showRewarded(onReward, onClose) {
+    if (AD_CONFIG.provider === "stub")
+      return runStub("rewarded", 5, () => { onReward && onReward(); }, () => { onClose && onClose(); });
+    // TODO: 実プロバイダ。報酬完了で onReward、未完了で onClose
+    return onClose && onClose();
+  }
+  // 頻度制限つきでインタースティシャルを挟む（条件未達ならそのまま cb）
+  function maybeInterstitial(cb) {
+    const now = Date.now();
+    const due = gamesSince >= AD_CONFIG.interstitialEveryGames
+      && (now - lastInterTs) / 1000 >= AD_CONFIG.interstitialMinIntervalSec;
+    if (due) { gamesSince = 0; lastInterTs = now; showInterstitial(cb); }
+    else cb();
+  }
+  return { init, noteGameEnd, showInterstitial, showRewarded, maybeInterstitial };
+})();
+
+// リワード視聴後の「復活」：危険ゾーンのフルーツを片付けて続行
+function doRevive() {
+  reviveUsed = true;
+  for (const body of Composite.allBodies(engine.world)) {
+    if (body.label !== "item") continue;
+    if (body.position.y - ITEMS[body.level].r > foulY() - 30) {
+      World.remove(engine.world, body);
+      burst(body.position.x, body.position.y, body.level);
+    }
+  }
+  overflowTimer = 0; settleFrames = 0;
+  gameOver = false;
+  reviveBtn.style.display = "none";
+  overlay.classList.remove("show");
+  // 復活演出
+  bestFlashEl.textContent = t("revived");
+  bestFlashEl.classList.remove("show"); void bestFlashEl.offsetWidth; bestFlashEl.classList.add("show");
+  phase = "aim";
+  if (!activeBody) spawnNext();
+}
+
+function showGameOver(title, text, canRevive) {
   gameOver = true;
   lastScore = score;
   ovTitle.textContent = title;
   ovText.textContent = text;
   ovSaved.style.display = "none";
+  // 復活ボタン：通常のゲームオーバー時かつ未使用かつ有効なときだけ
+  reviveBtn.style.display = (canRevive && !reviveUsed && AD_CONFIG.enableRevive) ? "block" : "none";
   overlay.classList.add("show");
+  Ads.noteGameEnd();
   autoSubmitScore();   // 保存済みの名前で自動登録（自己ベスト更新時）
 }
 let lastSubmitTs = 0;
 async function autoSubmitScore() {
-  const nm = (localStorage.getItem("ftp_name") || "").trim() || t("guest");
+  const nm = currentName();
   // 自己ベストを更新した時だけランキングに登録（連投を防ぐ）
   if (lastScore > 0 && lastScore > bestAtStart) {
     const ts = Date.now();
@@ -829,12 +1058,12 @@ async function autoSubmitScore() {
 }
 function endGame() {
   if (gameOver) return;
-  showGameOver(t("gameover"), t("overflow", score));
+  showGameOver(t("gameover"), t("overflow", score), true);   // 通常GO＝復活可
   sfxEnd(false);
 }
 function win() {
   if (gameOver) return;
-  showGameOver(t("clear"), t("clearText", score));
+  showGameOver(t("clear"), t("clearText", score), false);    // クリア＝復活なし
   sfxEnd(true);
 }
 
@@ -846,6 +1075,7 @@ function resetGame() {
   aiming = false; aimVec = { x: 0, y: 0 };
   overflowTimer = 0; settleFrames = 0;
   comboCount = 0; bestAtStart = best; bestFlashed = false;
+  reviveUsed = false; reviveBtn.style.display = "none";
   comboPopEl.classList.remove("show"); bestFlashEl.classList.remove("show");
   maxRevealed = SPAWNABLE - 1; updateEvoBar();
   nextLevel = Math.floor(Math.random() * SPAWNABLE);
@@ -862,7 +1092,9 @@ window.addEventListener("mouseup", onUp);
 canvas.addEventListener("touchstart", (e) => { e.preventDefault(); const t = e.touches[0]; onDown(t.clientX, t.clientY); }, { passive: false });
 canvas.addEventListener("touchmove", (e) => { e.preventDefault(); const t = e.touches[0]; onMove(t.clientX, t.clientY); }, { passive: false });
 canvas.addEventListener("touchend", (e) => { e.preventDefault(); onUp(); }, { passive: false });
-document.getElementById("restart").addEventListener("click", () => { unlockAudio(); resetGame(); });
+document.getElementById("restart").addEventListener("click", () => { unlockAudio(); Ads.maybeInterstitial(() => resetGame()); });
+reviveBtn.addEventListener("click", () => { unlockAudio(); Ads.showRewarded(() => doRevive(), () => {}); });
+Ads.init();
 
 /* 進化バー */
 const chainEl = document.getElementById("chain");
@@ -893,6 +1125,35 @@ const startScreen = document.getElementById("startScreen");
 const rankScreen = document.getElementById("rankScreen");
 const ovSaved = document.getElementById("ovSaved");
 const nameInput = document.getElementById("nameInput");
+const nameRow = document.getElementById("nameRow");
+const nameDisplay = document.getElementById("nameDisplay");
+const playerNameEl = document.getElementById("playerName");
+
+/* なまえは「初回起動時に1回だけ」入力。以降は保存名で自動ランキング送信される。 */
+function isNameConfigured() {
+  if (localStorage.getItem("ftp_name_set") === "1") return true;
+  // 旧バージョンで既になまえを入れていた人は再入力を求めない（自動移行）
+  if ((localStorage.getItem("ftp_name") || "").trim()) { localStorage.setItem("ftp_name_set", "1"); return true; }
+  return false;
+}
+function currentName() { return (localStorage.getItem("ftp_name") || "").trim() || t("guest"); }
+function saveName(raw) {
+  localStorage.setItem("ftp_name", (raw || "").trim().slice(0, 10));
+  localStorage.setItem("ftp_name_set", "1");   // 確定フラグ＝以後は入力を求めない
+}
+function refreshNameUI() {
+  const configured = isNameConfigured();
+  nameRow.style.display = configured ? "none" : "flex";
+  nameDisplay.style.display = configured ? "flex" : "none";
+  if (configured) playerNameEl.textContent = currentName();
+  else nameInput.value = localStorage.getItem("ftp_name") || "";
+}
+function enterNameEdit() {   // ✏️で再入力モードに戻す
+  nameRow.style.display = "flex";
+  nameDisplay.style.display = "none";
+  nameInput.value = localStorage.getItem("ftp_name") || "";
+  nameInput.focus();
+}
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyD7tRAnkuISCWxnS9kgJnyZnWYLxRJ_fWk",
@@ -958,18 +1219,21 @@ async function renderRanking(highlightTs) {
 }
 function showStart() {
   document.getElementById("startBest").textContent = best;
-  nameInput.value = localStorage.getItem("ftp_name") || "";
+  refreshNameUI();   // 初回のみ入力欄、2回目以降は保存名を表示
   rankScreen.classList.remove("show");
   overlay.classList.remove("show");
   startScreen.classList.add("show");
   started = false;
+  playMusic("title");   // スタート画面＝タイトル曲
 }
 function beginGame() {
   unlockAudio();
+  if (!isNameConfigured()) saveName(nameInput.value);   // 初回はスタート時になまえを確定
   startScreen.classList.remove("show");
   rankScreen.classList.remove("show");
   resetGame();
   started = true;
+  playMusic("game");    // プレイ開始＝プレイ中の曲に切替
 }
 function openRanking(highlightTs) { rankScreen.classList.add("show"); renderRanking(highlightTs); }
 
@@ -987,8 +1251,14 @@ document.getElementById("langToggle").addEventListener("click", () => {
 });
 // 名前はスタート画面で1回入力すれば保存され、以降は自動でランキング送信される
 nameInput.addEventListener("input", () => {
-  localStorage.setItem("ftp_name", nameInput.value.trim().slice(0, 10));
+  localStorage.setItem("ftp_name", nameInput.value.trim().slice(0, 10));  // 下書き保存
 });
+// OKボタン／Enterでなまえを確定（以後は表示モードに切替・再入力を求めない）
+function commitName() { saveName(nameInput.value); refreshNameUI(); }
+document.getElementById("nameOk").addEventListener("click", commitName);
+nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); commitName(); } });
+// ✏️で後からなまえを変更できる
+document.getElementById("nameEdit").addEventListener("click", enterNameEdit);
 
 /* サービスワーカー登録（PWA／オフライン対応・自動更新） */
 if ("serviceWorker" in navigator) {
