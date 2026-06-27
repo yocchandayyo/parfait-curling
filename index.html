@@ -11,6 +11,8 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
+<!-- Google AdSense：サイト所有権の確認 ＋ H5 Games Ads の読み込み -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6679576726407478" crossorigin="anonymous"></script>
 <meta property="og:type" content="website">
 <meta property="og:title" content="Fruit Parfait Game">
 <meta property="og:description" content="Slide & merge cute fruits to build the ultimate parfait! A relaxing browser puzzle with a global ranking.">
@@ -938,15 +940,21 @@ function addScore(n) {
   if (!bestFlashed && bestAtStart > 0 && score > bestAtStart) { bestFlashed = true; showBestFlash(); }
 }
 
-/* ===================== 広告（Web側／TWAにもそのまま反映される） =====================
-   provider を "stub"（テスト表示）にしてあるので、実ネットワーク導入前でも動作確認できる。
-   本番では showInterstitialReal / showRewardedReal の中身を広告SDK呼び出しに差し替えるだけ。 */
+/* ===================== 広告（Google H5 Games Ads／TWAにもそのまま反映される） =====================
+   ローダ(adsbygoogle.js, client=ca-pub-6679576726407478)は<head>に設置済み＝サイト所有権の確認用。
+   ▼本番化の手順（AdSense審査が通ってH5 Games Adsが有効になったら）：
+     1. publisherId に "ca-pub-6679576726407478" を設定（←headと同じID）
+     2. testMode: true でGoogleのテスト広告を確認 → OKなら false で本番収益化
+   publisherId が空の間は内蔵テスト広告(stub)で動くので、審査中もプレイ体験は維持される。 */
 const AD_CONFIG = {
-  provider: "stub",               // "stub"=内蔵テスト広告 / 後で "h5games" 等に変更
+  publisherId: "",                // 審査通過後に "ca-pub-6679576726407478" を設定（空ならテスト広告stub）
+  testMode: true,                 // 審査前の確認用。本番収益化時は false
   interstitialEveryGames: 2,      // 何ゲームごとにインタースティシャルを出すか
   interstitialMinIntervalSec: 45, // 連続表示を避ける最短間隔（秒）
   enableRevive: true,             // リワード動画での「復活」を有効にするか
 };
+// パブリッシャーID未設定なら内蔵テスト広告、設定済みなら Google H5 Games Ads
+const AD_PROVIDER = AD_CONFIG.publisherId ? "h5" : "stub";
 const reviveBtn = document.getElementById("reviveBtn");
 const adOverlay = document.getElementById("adOverlay");
 const adBadge = document.getElementById("adBadge");
@@ -958,7 +966,16 @@ let reviveUsed = false;           // 1ゲームにつき復活は1回まで
 
 const Ads = (() => {
   let gamesSince = 0, lastInterTs = 0, busy = false, adTimer = null;
-  function init() { /* stubは初期化不要。実SDKはここでロード */ }
+  function init() {
+    if (AD_PROVIDER !== "h5") return;   // stubは初期化不要
+    // ローダ(adsbygoogle.js)は<head>に静的設置済み。ここでは Placement API を設定するだけ
+    window.adsbygoogle = window.adsbygoogle || [];
+    window.adBreak = window.adConfig = function (o) { window.adsbygoogle.push(o); };
+    window.adConfig({
+      preloadAdBreaks: "on", sound: audioOn ? "on" : "off",
+      ...(AD_CONFIG.testMode ? { adBreakTest: "on" } : {}),
+    });
+  }
   function noteGameEnd() { gamesSince++; }
 
   // 内蔵テスト広告：実ネットワーク導入までの代替（カウントダウン→完了）
@@ -966,7 +983,7 @@ const Ads = (() => {
     if (busy) return;
     busy = true;
     const rewarded = kind === "rewarded";
-    adBadge.textContent = t("adLabel") + (AD_CONFIG.provider === "stub" ? " (TEST)" : "");
+    adBadge.textContent = t("adLabel") + (AD_PROVIDER === "stub" ? " (TEST)" : "");
     adArt.textContent = rewarded ? "🎬" : "🍨";
     adMsg.textContent = rewarded ? t("adRewardHint") : t("adInterHint");
     adSkip.classList.toggle("reward", false);
@@ -1001,16 +1018,30 @@ const Ads = (() => {
   }
   function closeAd() { clearInterval(adTimer); adOverlay.classList.remove("show"); adSkip.onclick = null; busy = false; }
 
+  function pauseBgmForAd() { try { bgmAudio.pause(); titleAudio.pause(); } catch (e) {} }
   function showInterstitial(done) {
-    if (AD_CONFIG.provider === "stub") return runStub("interstitial", 3, done, done);
-    // TODO: 実プロバイダ。失敗時も必ず done() でゲームへ戻す
-    return done();
+    if (AD_PROVIDER !== "h5") return runStub("interstitial", 3, done, done);
+    let fin = false;
+    const finish = () => { if (!fin) { fin = true; resumeMusic(); done(); } };  // 失敗時もゲームへ戻す
+    try {
+      window.adBreak({ type: "next", name: "game-over",
+        beforeAd: pauseBgmForAd, afterAd: () => {}, adBreakDone: finish });
+    } catch (e) { finish(); }
+    setTimeout(finish, 8000);   // 広告が出ない/詰まっても進める保険
   }
   function showRewarded(onReward, onClose) {
-    if (AD_CONFIG.provider === "stub")
+    if (AD_PROVIDER !== "h5")
       return runStub("rewarded", 5, () => { onReward && onReward(); }, () => { onClose && onClose(); });
-    // TODO: 実プロバイダ。報酬完了で onReward、未完了で onClose
-    return onClose && onClose();
+    let rewarded = false, fin = false;
+    const finish = () => { if (!fin) { fin = true; resumeMusic(); (rewarded ? onReward : onClose)(); } };
+    try {
+      window.adBreak({ type: "reward", name: "revive",
+        beforeReward: (showAdFn) => showAdFn(),   // 復活ボタン押下＝視聴同意なので即表示
+        adViewed: () => { rewarded = true; },      // 最後まで見た＝復活付与
+        adDismissed: () => { rewarded = false; },  // 途中で閉じた＝復活なし
+        beforeAd: pauseBgmForAd, afterAd: () => {}, adBreakDone: finish });
+    } catch (e) { finish(); }
+    setTimeout(finish, 15000);
   }
   // 頻度制限つきでインタースティシャルを挟む（条件未達ならそのまま cb）
   function maybeInterstitial(cb) {
