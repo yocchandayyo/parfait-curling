@@ -1,5 +1,5 @@
 /* オフライン対応のサービスワーカー（ネットワーク優先で常に最新を取得） */
-const CACHE = "parfait-curling-v8";
+const CACHE = "parfait-curling-v9";
 const ASSETS = [
   "./", "./index.html", "./manifest.json", "./title-bg.jpg", "./assets/bgm.mp3", "./assets/bgm_title.mp3",
   "./icon-192.png", "./icon-512.png", "./icon-180.png",

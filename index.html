@@ -1154,6 +1154,26 @@ function enterNameEdit() {   // ✏️で再入力モードに戻す
   nameInput.value = localStorage.getItem("ftp_name") || "";
   nameInput.focus();
 }
+// 端末ごとの永続プレイヤーID（ランキングを1人1行に集約するためのキー）
+function playerId() {
+  let id = localStorage.getItem("ftp_pid");
+  if (!id) {
+    id = (self.crypto && crypto.randomUUID) ? crypto.randomUUID()
+       : "p_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem("ftp_pid", id);
+  }
+  return id;
+}
+// 同一プレイヤー（pid優先、無ければ名前）を最高スコアの1件に集約 → スコア降順
+function dedupBest(list) {
+  const byKey = new Map();
+  for (const r of list) {
+    const key = r.pid || ("name:" + (r.name || ""));
+    const prev = byKey.get(key);
+    if (!prev || r.score > prev.score) byKey.set(key, r);
+  }
+  return [...byKey.values()].sort((a, b) => b.score - a.score);
+}
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyD7tRAnkuISCWxnS9kgJnyZnWYLxRJ_fWk",
@@ -1175,24 +1195,23 @@ async function fb() {
 }
 async function submitScoreOnline(name, score, ts) {
   const { db, m } = await fb();
-  await m.addDoc(m.collection(db, "scores"), { name, score, ts });
+  await m.addDoc(m.collection(db, "scores"), { name, score, ts, pid: playerId() });
 }
 async function fetchTopOnline(n) {
   const { db, m } = await fb();
-  const q = m.query(m.collection(db, "scores"), m.orderBy("score", "desc"), m.limit(n));
+  // 重複を畳むため多めに取得 → プレイヤー単位で最高スコアに集約 → 上位n件
+  const q = m.query(m.collection(db, "scores"), m.orderBy("score", "desc"), m.limit(Math.max(n * 8, 100)));
   const snap = await m.getDocs(q);
   const out = [];
   snap.forEach((d) => out.push(d.data()));
-  return out;
+  return dedupBest(out).slice(0, n);
 }
 
 function escapeHtml(s) { return (s + "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
-function getRanking() { try { return JSON.parse(localStorage.getItem(RANK_KEY)) || []; } catch (e) { return []; } }
-function addRankingLocal(name, sc, ts) {  // オフライン用のフォールバック保存
-  const list = getRanking();
-  const entry = { name: (name || t("guest")).slice(0, 10), score: sc, ts: ts || Date.now() };
-  list.push(entry);
-  list.sort((a, b) => b.score - a.score);
+function getRanking() { try { return dedupBest(JSON.parse(localStorage.getItem(RANK_KEY)) || []); } catch (e) { return []; } }
+function addRankingLocal(name, sc, ts) {  // オフライン用のフォールバック保存（1人1行に集約）
+  const entry = { name: (name || t("guest")).slice(0, 10), score: sc, ts: ts || Date.now(), pid: playerId() };
+  const list = dedupBest([...getRanking(), entry]);
   localStorage.setItem(RANK_KEY, JSON.stringify(list.slice(0, 20)));
   return entry;
 }
